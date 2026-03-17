@@ -1,6 +1,7 @@
 # Package Imports
 from os import makedirs
 from statistics import mean
+import torch
 from torch import load, no_grad, clamp, Tensor
 from torch.cuda import Event, synchronize, get_device_name
 from torchvision.transforms.functional import to_pil_image
