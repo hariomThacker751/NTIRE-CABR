@@ -20,12 +20,21 @@ HAFT (Hybrid Aperture-conditioned Feature Transformer) introduces a multi-stage 
 
 ## 🛠️ Installation & Dependencies
 
-Designed for **PyTorch 2.x**, the codebase requires the following dependencies:
+To set up the environment and install all necessary dependencies for training and inference, follow these steps:
 
-```bash
-# Core Libraries
-pip install torch torchvision numpy opencv-python Pillow tqdm lpips
-```
+### Prerequisites
+- Python 3.8+
+- NVIDIA GPU with CUDA support
+
+### Dependencies
+The project requires the following Python libraries:
+- `torch >= 2.0.0`
+- `torchvision`
+- `numpy`
+- `opencv-python`
+- `Pillow`
+- `tqdm`
+- `lpips`
 
 ### Quick Set-up
 ```bash
@@ -34,10 +43,13 @@ cd NTIRE-CABR
 
 # Create virtual environment
 python -m venv venv
-source venv/bin/activate # Windows: .\venv\Scripts\activate
+# On Windows:
+.\venv\Scripts\activate
+# On Linux/macOS:
+source venv/bin/activate
 
 # Install all dependencies
-pip install torch torchvision tqdm opencv-python Pillow lpips
+pip install torch torchvision numpy opencv-python Pillow tqdm lpips
 ```
 
 ---
@@ -49,7 +61,7 @@ Models were fine-tuned using the **RealBokeh_3MP** dataset.
 - **Dataset Link**: [RealBokeh_3MP (Hugging Face)](https://huggingface.co/datasets/timseizinger/RealBokeh_3MP)
 
 ### Inference & NTIRE Testing
-For challenge evaluation, ensure the dataset is structured under:
+For challenge evaluation and generating submission files, ensure the testing dataset is structured under:
 `HAFT FACTSHEET/dataset/Bokeh_NTIRE2026`
 
 ---
@@ -64,18 +76,13 @@ python "HAFT FACTSHEET/train_haft_small.py"
 *Note: The script uses differential learning rates ($10^{-5}$ for backbone, $5 \times 10^{-4}$ for HAFT heads) and a composite Charbonnier-FFT-LPIPS loss.*
 
 ### Submission & Inference
-Generate the final Codabench-ready `.zip` submission:
+To generate the final Codabench-ready `.zip` submission:
 ```bash
 python "HAFT FACTSHEET/submit_ntire.py"
 ```
-- **Input**: `HAFT FACTSHEET/dataset/Bokeh_NTIRE2026`
-- **Output**: Images are stored in the `outputs/` directory.
-- **Submission**: A metadata-compliant ZIP file is generated in the root.
-
-### HPC/Cluster Execution
-Pre-configured Slurm scripts for Slurm-managed environments:
-- **Training**: `sbatch "HAFT FACTSHEET/haft_job.sh"`
-- **Submission**: `sbatch "HAFT FACTSHEET/submit_job.sh"`
+- **Input**: The script reads from `HAFT FACTSHEET/dataset/Bokeh_NTIRE2026`.
+- **Output**: Individual prediction images and the required `readme.txt` are stored in the `outputs/` directory.
+- **Archive**: A submission-compliant ZIP file is automatically generated in the root directory upon completion.
 
 ---
 
