@@ -93,22 +93,7 @@ Our work builds upon several foundational architectures:
 - **NAFNet**: Simple Baselines for Image Restoration (ECCV 2022)
 - **Bokeh Rendering from Defocus Estimation** (ECCV 2022)
 
-### Cite Our Work
-```bibtex
-@InProceedings{NTIRE2026_CABR_Report,
-    author    = {Seizinger, Tim and Vasluianu, Florin-Alexandru and Conde, Marcos V. and Wu, Zongwei and Zhou, Zhuyun and Timofte, Radu},
-    title     = {NTIRE 2026 Challenge on Controllable Aperture Bokeh Rendering Report},
-    booktitle = {Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR) Workshops},
-    year      = {2026}
-}
 
-@inproceedings{HAFT_DVision_2026,
-    title     = {HAFT: Hybrid Aperture-conditioned Feature Transformer for Controllable Bokeh Rendering},
-    author    = {DVision Team (Divyavardhan Singh, Hariom Thacker, Aanchal Maurya, Hammad Mohammad)},
-    booktitle = {NTIRE 2026 Workshop @ CVPR 2026},
-    year      = {2026}
-}
-```
 
 ---
 *Developed by the DVision Team (SVNIT Surat) for the NTIRE 2026 Challenge.*
