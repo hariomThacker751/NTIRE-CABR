@@ -1,0 +1,20 @@
+{
+    "id": 20,
+    "source_image": "in/20_f22.JPG",
+    "source_av": 22.0,
+    "target_images": [
+        "gt/20/20_f2.0.JPG",
+        "gt/20/20_f2.8.JPG",
+        "gt/20/20_f13.JPG"
+    ],
+    "target_avs": [
+        2.0,
+        2.8,
+        13.0
+    ],
+    "focal_length": 58,
+    "ISO": 200,
+    "EV": 6.625,
+    "focus_plane_distance": 0.6799999999999999,
+    "focus_plane_uncertainty": 0.019999999999999962
+}

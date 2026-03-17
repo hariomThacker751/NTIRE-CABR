@@ -1,0 +1,18 @@
+{
+    "id": 17,
+    "source_image": "in/17_f22.JPG",
+    "source_av": 22.0,
+    "target_images": [
+        "gt/17/17_f2.0.JPG",
+        "gt/17/17_f7.1.JPG"
+    ],
+    "target_avs": [
+        2.0,
+        7.1
+    ],
+    "focal_length": 28,
+    "ISO": 100,
+    "EV": 11.5,
+    "focus_plane_distance": 0.565,
+    "focus_plane_uncertainty": 0.014999999999999958
+}

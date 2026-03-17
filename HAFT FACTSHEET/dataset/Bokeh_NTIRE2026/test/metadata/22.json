@@ -1,0 +1,22 @@
+{
+    "id": 22,
+    "source_image": "in/22_f22.JPG",
+    "source_av": 22.0,
+    "target_images": [
+        "gt/22/22_f2.0.JPG",
+        "gt/22/22_f4.0.JPG",
+        "gt/22/22_f6.3.JPG"
+    ],
+    "target_avs": [
+        2.0,
+        4.0,
+        5.6,
+        6.3,
+        14.0
+    ],
+    "focal_length": 41,
+    "ISO": 400,
+    "EV": 7.375,
+    "focus_plane_distance": 0.58,
+    "focus_plane_uncertainty": 0.010000000000000009
+}

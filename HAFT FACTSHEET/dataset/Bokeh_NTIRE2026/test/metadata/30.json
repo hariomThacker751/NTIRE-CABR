@@ -1,0 +1,18 @@
+{
+    "id": 30,
+    "source_image": "in/30_f22.JPG",
+    "source_av": 22.0,
+    "target_images": [
+        "gt/30/30_f2.0.JPG",
+        "gt/30/30_f3.2.JPG"
+    ],
+    "target_avs": [
+        2.0,
+        3.2
+    ],
+    "focal_length": 42,
+    "ISO": 250,
+    "EV": 13.875,
+    "focus_plane_distance": 1.31,
+    "focus_plane_uncertainty": 0.06000000000000005
+}

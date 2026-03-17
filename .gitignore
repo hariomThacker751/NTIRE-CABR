@@ -1,0 +1,34 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Models and static assets
+# *.pt
+# *.pth
+# *.ckpt
+# *.h5
+*.zip
+*.7z
+*.rar
+*.tar.gz
+*.tar
+
+# Data
+datasets/
+data/
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
