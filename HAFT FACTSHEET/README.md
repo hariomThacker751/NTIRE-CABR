@@ -22,7 +22,8 @@ HAFT (Hybrid Aperture-conditioned Feature Transformer) utilizes a multi-stage pi
 
 The trained HAFT checkpoint used for our challenge submission is available for download:
 
-*   **HAFT Checkpoint (Google Drive)**: [Download Link](https://drive.google.com/file/d/1QDwx-tDu7TBYsyYjiBCO-98suTFRbLSq/view?usp=drive_link)
+*   **Local Checkpoint**: `HAFT FACTSHEET/checkpoints/haft_large_best_psnr.pth`
+*   **Google Drive Backup**: [Download Link](https://drive.google.com/file/d/1QDwx-tDu7TBYsyYjiBCO-98suTFRbLSq/view?usp=drive_link)
 
 ---
 
@@ -70,11 +71,14 @@ python "HAFT FACTSHEET/train_haft_small.py"
 The training process employs differential learning rates ($10^{-5}$ for the backbone, $5 \times 10^{-4}$ for HAFT modules) and a composite Charbonnier-FFT-LPIPS loss function.
 
 ### Inference and Submission Generation
-To generate predictions for the NTIRE 2026 challenge and create a Codabench-compliant submission:
+To generate predictions for the NTIRE 2026 challenge and create a Codabench-compliant submission, we leverage the standardized `run.py` script:
+
 ```bash
-python "HAFT FACTSHEET/submit_ntire.py"
+python "HAFT FACTSHEET/run.py"
 ```
-*Input images are read from the specified directory, and results are stored in the `outputs/` folder. A submission archive is automatically generated in the root directory.*
+*   **Model Weights**: Utilizes the pre-trained `haft_large_best_psnr.pth`.
+*   **Output**: Individual prediction images and the required `readme.txt` are stored in the `outputs/` directory.
+*   **Submission**: A Codabench-ready ZIP archive is automatically generated in the `outputs` folder upon completion.
 
 ---
 
@@ -96,7 +100,7 @@ Please cite the following works if you use this codebase in your research:
     year      = {2026}
 }
 
- @misc{Seizinger2023Bokehlicious,
+@misc{Seizinger2023Bokehlicious,
   author = {Seizinger, Tim},
   title = {Bokehlicious: Bokeh Rendering from Defocus Estimation},
   year = {2023},
