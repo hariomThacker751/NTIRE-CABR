@@ -35,7 +35,7 @@ def unsqueeeze_batch(batch):
 
 # --- CONFIGURATION CLASS FOR EASY PATH PLACEMENT ---
 class Config:
-    phase = 'dev'                                             # 'dev' or 'test'
+    phase = 'test'                                            # Updated default to 'test'
     base_dir = Path(__file__).parent
     dataset_root_dir = base_dir / 'dataset'                   # Points to dataset folder inside HAFT FACTSHEET
     out_path = base_dir / 'outputs'                           # Path where outputs and zip will be saved
