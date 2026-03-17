@@ -1,44 +1,45 @@
 # HAFT: Hybrid Aperture-conditioned Feature Transformer for Controllable Bokeh Rendering
 
-<p align="center">
-  <img src="https://img.shields.io/badge/NTIRE-2026-blue.svg" alt="NTIRE 2026">
-  <img src="https://img.shields.io/badge/Task-Bokeh%20Rendering-orange.svg" alt="Task">
-  <img src="https://img.shields.io/badge/Python-3.8%2B-blue.svg" alt="Python">
-  <img src="https://img.shields.io/badge/PyTorch-2.0%2B-red.svg" alt="PyTorch">
-  <img src="https://img.shields.io/badge/License-MIT-green.svg" alt="License">
-</p>
+[![NTIRE 2026](https://img.shields.io/badge/NTIRE-2026-blue.svg)](https://cvlai.net/ntire/2026/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-Official implementation of **HAFT**, the **CV SVNIT** team's solution for the **NTIRE 2026 Controllable Aperture Bokeh Rendering (CABR) Challenge**. HAFT is a professional architecture designed for generating high-resolution, photorealistic bokeh effects with precise focal tracking and aperture control.
+Official implementation of **HAFT**, developed by team **CV SVNIT** for the **NTIRE 2026 Controllable Aperture Bokeh Rendering (CABR) Challenge**. HAFT is a high-resolution architecture designed for photorealistic bokeh synthesis with precise focal tracking and aperture control.
 
 ---
 
-## 🔬 Architectural Overview
+## Architectural Overview
 
-**HAFT (Hybrid Aperture-conditioned Feature Transformer)** introduces a robust multi-stage pipeline for controllable bokeh synthesis:
+HAFT (Hybrid Aperture-conditioned Feature Transformer) utilizes a multi-stage pipeline to achieve controllable bokeh rendering from monocular inputs:
 
-1.  **Aperture Encoding**: Encodes scalar f-stop values into a 64-dimensional embedding via Fourier positional features and a two-layer MLP. This guides the network through **FiLM** layers.
-2.  **Backbone U-Net**: A modified U-Net processing RGB images with a physics-based **Circle-of-Confusion (CoC)** map.
-3.  **Aperture-Aware Attention**: Utilizes decomposed attention with dynamic relative positional bias that scales with the aperture value.
-4.  **Depth-guided Refinement**: A lightweight head that fuses base predictions with depth and focal priors to correct artifacts at transitions.
+1.  **Aperture Encoding**: Scalar f-stop values are mapped into a 64-dimensional embedding via Fourier positional features (8 frequency bands) and a two-layer MLP. This embedding modulates the network features through **FiLM (Feature-wise Linear Modulation)** layers.
+2.  **Backbone U-Net**: An optimized U-Net backbone processes RGB inputs concatenated with physics-based **Circle-of-Confusion (CoC)** maps and spatial positional encodings.
+3.  **Aperture-Aware Attention**: The Deep Feature Extraction (DFE) bottleneck incorporates decomposed attention with dynamic relative positional bias. The attention span scales inversely with the aperture value, enabling adaptive spatial context for varying blur intensities.
+4.  **Depth-guided Refinement**: A specialized refinement head fuses base predictions with depth and focal priors to predict focus-weighted residuals, effectively mitigating artifacts at foreground-background transitions.
 
 ---
 
-## 🛠️ Installation & Setup
+## Pre-trained Models
 
-Follow these steps to set up the environment and install all dependencies for training and inference.
+The trained HAFT checkpoint used for our challenge submission is available for download:
 
-### 📋 Prerequisites
-- Python 3.8+
-- NVIDIA GPU + CUDA
+*   **HAFT Checkpoint (Google Drive)**: [Download Link](https://drive.google.com/file/d/1QDwx-tDu7TBYsyYjiBCO-98suTFRbLSq/view?usp=drive_link)
 
-### ⚙️ Quick Start
+---
+
+## Installation Guide
+
+The environment requires Python 3.8+ and a CUDA-compatible NVIDIA GPU.
+
+### Dependency Installation
+All required Python packages are listed in `requirements.txt`.
+
 ```bash
 git clone https://github.com/hariomThacker751/NTIRE-CABR.git
 cd NTIRE-CABR
 
-# Setup environment
+# Environment Setup
 python -m venv venv
-# On Windows: .\venv\Scripts\activate | On Linux: source venv/bin/activate
+# Windows: .\venv\Scripts\activate | Linux: source venv/bin/activate
 source venv/bin/activate 
 
 # Install dependencies
@@ -47,44 +48,45 @@ pip install -r requirements.txt
 
 ---
 
-## 📂 Dataset Management
+## Dataset Management
 
-### 📥 Training Dataset
-Models were fine-tuned using the **RealBokeh_3MP** dataset.
-- **Source**: [RealBokeh_3MP on Hugging Face](https://huggingface.co/datasets/timseizinger/RealBokeh_3MP)
+### Training Data
+Models were trained using the **RealBokeh_3MP** dataset.
+*   **Access**: [RealBokeh_3MP on Hugging Face](https://huggingface.co/datasets/timseizinger/RealBokeh_3MP)
 
-### 🧪 Inference & NTIRE Testing
-For challenge evaluation, ensure the dataset is structured under:
+### Inference and Testing
+For challenge evaluation, the dataset should be organized according to the structure expected by the inference scripts. The testing data path is typically:
 `HAFT FACTSHEET/dataset/Bokeh_NTIRE2026`
 
 ---
 
-## 🚀 Execution Guide
+## Execution Instructions
 
-### 🏋️ Training
-Execute the joint fine-tuning of the backbone and HAFT modules:
+### Training
+To initialize training for the backbone and HAFT modules:
 ```bash
 python "HAFT FACTSHEET/train_haft_small.py"
 ```
+The training process employs differential learning rates ($10^{-5}$ for the backbone, $5 \times 10^{-4}$ for HAFT modules) and a composite Charbonnier-FFT-LPIPS loss function.
 
-### 🎯 Submission & Inference
-Generate the final Codabench-ready `.zip` submission:
+### Inference and Submission Generation
+To generate predictions for the NTIRE 2026 challenge and create a Codabench-compliant submission:
 ```bash
 python "HAFT FACTSHEET/submit_ntire.py"
 ```
-*Outputs (images and metadata) are stored in the `outputs/` directory, and a submission ZIP is created in the root.*
+*Input images are read from the specified dataset directory, and results are stored in the `outputs/` folder. A submission archive is automatically generated in the root directory.*
 
 ---
 
-## 📚 References & Citations
+## References and Citations
 
-Our work is based on the **Bokehlicious** architecture and several foundational papers in image restoration.
+The HAFT architecture incorporates elements from the **Bokehlicious** project and other recent advancements in image restoration.
 
-### 🔗 Reference Repository
-- **Bokehlicious**: [https://github.com/TimSeizinger/Bokehlicious](https://github.com/TimSeizinger/Bokehlicious)
+### Reference Repository
+*   **Bokehlicious**: [https://github.com/TimSeizinger/Bokehlicious](https://github.com/TimSeizinger/Bokehlicious)
 
-### 📄 Citation
-If this repository helps your research, please cite the following:
+### Citation
+Please cite the following works if you use this codebase in your research:
 
 ```bibtex
 @InProceedings{NTIRE2026_CABR_Report,
@@ -94,9 +96,9 @@ If this repository helps your research, please cite the following:
     year      = {2026}
 }
 
-@inproceedings{HAFT_DVision_2026,
+@inproceedings{HAFT_CVSVNIT_2026,
     title     = {HAFT: Hybrid Aperture-conditioned Feature Transformer for Controllable Bokeh Rendering},
-    author    = {CV SVNIT Team (Divyavardhan Singh, Hariom Thacker, Aanchal Maurya, Hammad Mohammad)},
+    author    = {Singh, Divyavardhan and Thacker, Hariom and Maurya, Aanchal and Mohammad, Hammad},
     booktitle = {NTIRE 2026 Workshop @ CVPR 2026},
     year      = {2026}
 }
@@ -112,6 +114,4 @@ If this repository helps your research, please cite the following:
 ```
 
 ---
-<p align="center">
-  <i>Developed by the CV SVNIT Team (SVNIT Surat) for NTIRE 2026.</i>
-</p>
+*Developed by the CV SVNIT Team (SVNIT Surat) for the NTIRE 2026 Challenge.*
