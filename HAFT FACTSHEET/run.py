@@ -1,7 +1,6 @@
 # Package Imports
 from os import makedirs
 from statistics import mean
-import torch
 from torch import load, no_grad, clamp, Tensor
 from torch.cuda import Event, synchronize, get_device_name
 from torchvision.transforms.functional import to_pil_image
@@ -27,23 +26,24 @@ This script produces a submission ready .zip archive to be uploaded at
 https://www.codabench.org/competitions/12764/#/participate-tab for evaluation by our server.
 """
 
-def unsqueeeze_batch(batch, device):
+def unsqueeeze_batch(batch):
     for k, v in batch.items():
         if isinstance(v, Tensor):
-            batch[k] = v.unsqueeze(0).to(device)
+            batch[k] = v.unsqueeze(0).cuda()
     return batch
 
 
 # --- CONFIGURATION CLASS FOR EASY PATH PLACEMENT ---
 class Config:
     phase = 'dev'                                             # 'dev' or 'test'
-    dataset_root_dir = Path('./dataset')                      # Fixed: points to your root dataset folder
-    out_path = Path('./outputs')                              # Path where outputs and zip will be saved
-    name = 'HAFT_Large_Model_Dev'                               # Your model/architecture name
-    device = 'cuda' if torch.cuda.is_available() else 'cpu'   # Auto-detect device
+    base_dir = Path(__file__).parent
+    dataset_root_dir = base_dir / 'dataset'                   # Points to dataset folder inside HAFT FACTSHEET
+    out_path = base_dir / 'outputs'                           # Path where outputs and zip will be saved
+    name = 'HAFT_Large_Model_Dev'                             # Your model/architecture name
+    device = 'cuda'                                           # 'cuda' or 'cpu'
     image_format = 'png'                                      # 'png' is recommended
     extra_data = False                                        # True if you used extra training data
-    checkpoint_path = Path("C:/Users/divya/Downloads/final-20260317T080406Z-1-001/HAFT FACTSHEET/checkpoints/haft_large_best_psnr.pth") # Path to your model weights
+    checkpoint_path = base_dir / "checkpoints/haft_large_best_psnr.pth" # Path to your model weights
     max_inference_dim = 1024                                  # Max dimension for inference (saves VRAM & time)
 # ---------------------------------------------------
 
@@ -182,7 +182,7 @@ if __name__ == "__main__":
                 batch['mask'] = torch.zeros((1, h, w), dtype=torch.float32)
             # -----------------------------------
 
-            batch = unsqueeeze_batch(batch, args.device) 
+            batch = unsqueeeze_batch(batch) 
             synchronize() 
             start_events[i].record() 
             
@@ -197,32 +197,20 @@ if __name__ == "__main__":
                 'coc_map': batch['coc_map'],
             }
             
-            # --- Prediction Pass ---
-            if args.device == 'cuda':
-                with torch.amp.autocast('cuda', dtype=torch.bfloat16):
-                    output_orig = model(**model_kwargs)
-                
-                # Horizontal flip pass
-                model_kwargs_hflip = {}
-                for k, v in model_kwargs.items():
-                    if isinstance(v, torch.Tensor) and v.dim() >= 3:
-                        model_kwargs_hflip[k] = v.flip(-1)
-                    else:
-                        model_kwargs_hflip[k] = v
-                
-                with torch.amp.autocast('cuda', dtype=torch.bfloat16):
-                    output_hflip = model(**model_kwargs_hflip)
-                output_hflip = output_hflip.flip(-1)
-            else:
+            # --- TTA: Original + Horizontal Flip, then average ---
+            with torch.amp.autocast('cuda', dtype=torch.bfloat16):
                 output_orig = model(**model_kwargs)
-                
-                model_kwargs_hflip = {}
-                for k, v in model_kwargs.items():
-                    if isinstance(v, torch.Tensor) and v.dim() >= 3:
-                        model_kwargs_hflip[k] = v.flip(-1)
-                    else:
-                        model_kwargs_hflip[k] = v
-                output_hflip = model(**model_kwargs_hflip).flip(-1)
+            
+            # Horizontal flip pass
+            model_kwargs_hflip = {}
+            for k, v in model_kwargs.items():
+                if isinstance(v, torch.Tensor) and v.dim() >= 3:
+                    model_kwargs_hflip[k] = v.flip(-1)  # Flip W dimension
+                else:
+                    model_kwargs_hflip[k] = v
+            with torch.amp.autocast('cuda', dtype=torch.bfloat16):
+                output_hflip = model(**model_kwargs_hflip)
+            output_hflip = output_hflip.flip(-1)  # Flip back
             
             # Average predictions
             output = (output_orig + output_hflip) / 2.0
