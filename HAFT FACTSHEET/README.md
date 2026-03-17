@@ -8,7 +8,7 @@
   <img src="https://img.shields.io/badge/License-MIT-green.svg" alt="License">
 </p>
 
-Official implementation of **HAFT**, the DVision team's solution for the **NTIRE 2026 Controllable Aperture Bokeh Rendering (CABR) Challenge**. HAFT is a professional architecture designed for generating high-resolution, photorealistic bokeh effects with precise focal tracking and aperture control.
+Official implementation of **HAFT**, the **CV SVNIT** team's solution for the **NTIRE 2026 Controllable Aperture Bokeh Rendering (CABR) Challenge**. HAFT is a professional architecture designed for generating high-resolution, photorealistic bokeh effects with precise focal tracking and aperture control.
 
 ---
 
@@ -31,11 +31,6 @@ Follow these steps to set up the environment and install all dependencies for tr
 - Python 3.8+
 - NVIDIA GPU + CUDA
 
-### 📦 Dependencies
-```bash
-pip install torch torchvision numpy opencv-python Pillow tqdm lpips
-```
-
 ### ⚙️ Quick Start
 ```bash
 git clone https://github.com/hariomThacker751/NTIRE-CABR.git
@@ -47,7 +42,7 @@ python -m venv venv
 source venv/bin/activate 
 
 # Install dependencies
-pip install torch torchvision numpy opencv-python Pillow tqdm lpips
+pip install -r requirements.txt
 ```
 
 ---
@@ -93,7 +88,7 @@ If this repository helps your research, please cite the following:
 
 ```bibtex
 @InProceedings{NTIRE2026_CABR_Report,
-    author    = {Seizinger, Tim and Vasluianu, Florin-Alexandru and Conde, Marcos V. and Wu, Zongwei and Zhou, Zhuyun and Timofte, Radu},
+    author    = {Seizinger, Tim and Vasluianu, Florin-Alexandru and Conde, Marcos V. and Wu, Zongwei States, Zhuyun and Timofte, Radu},
     title     = {NTIRE 2026 Challenge on Controllable Aperture Bokeh Rendering Report},
     booktitle = {Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR) Workshops},
     year      = {2026}
@@ -101,7 +96,7 @@ If this repository helps your research, please cite the following:
 
 @inproceedings{HAFT_DVision_2026,
     title     = {HAFT: Hybrid Aperture-conditioned Feature Transformer for Controllable Bokeh Rendering},
-    author    = {DVision Team (Divyavardhan Singh, Hariom Thacker, Aanchal Maurya, Hammad Mohammad)},
+    author    = {CV SVNIT Team (Divyavardhan Singh, Hariom Thacker, Aanchal Maurya, Hammad Mohammad)},
     booktitle = {NTIRE 2026 Workshop @ CVPR 2026},
     year      = {2026}
 }
@@ -118,5 +113,5 @@ If this repository helps your research, please cite the following:
 
 ---
 <p align="center">
-  <i>Developed by the DVision Team (SVNIT Surat) for NTIRE 2026.</i>
+  <i>Developed by the CV SVNIT Team (SVNIT Surat) for NTIRE 2026.</i>
 </p>
