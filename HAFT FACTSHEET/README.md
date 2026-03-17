@@ -96,14 +96,7 @@ Please cite the following works if you use this codebase in your research:
     year      = {2026}
 }
 
-@inproceedings{HAFT_CVSVNIT_2026,
-    title     = {HAFT: Hybrid Aperture-conditioned Feature Transformer for Controllable Bokeh Rendering},
-    author    = {Singh, Divyavardhan and Thacker, Hariom and Maurya, Aanchal and Mohammad, Hammad},
-    booktitle = {NTIRE 2026 Workshop @ CVPR 2026},
-    year      = {2026}
-}
-
-@misc{Seizinger2023Bokehlicious,
+ @misc{Seizinger2023Bokehlicious,
   author = {Seizinger, Tim},
   title = {Bokehlicious: Bokeh Rendering from Defocus Estimation},
   year = {2023},
