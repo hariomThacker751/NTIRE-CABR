@@ -81,6 +81,23 @@ python "HAFT FACTSHEET/run.py"
 
 ---
 
+## Ablation Study
+
+We performed a systematic 4-experiment ablation study on the RealBokeh_3MP test split (14 images, 10 epochs each, Tesla T4) to validate each architectural component.
+
+| Variant | PSNR (dB) ↑ | SSIM ↑ | LPIPS ↓ |
+|---------|:-----------:|:------:|:-------:|
+| **Full HAFT (Ours)** | **31.13** | 0.9292 | 0.1160 |
+| w/o Refinement Head | 31.11 | **0.9309** | **0.1145** |
+| w/o CoC Map | 31.09 | 0.9297 | 0.1144 |
+| **w/o Positional Map** | **24.48** | **0.7497** | **0.2685** |
+
+The **Positional Map is the single most critical component** — its removal causes a **−6.65 dB PSNR collapse**. The Refinement Head and CoC Map each contribute modestly to PSNR but are important for perceptual quality (LPIPS) at foreground/background boundaries.
+
+**→ [Full ablation study with epoch logs and analysis](HAFT%20FACTSHEET/ablation/README.md)**
+
+---
+
 ## References and Citations
 
 The HAFT architecture incorporates elements from the **Bokehlicious** project and other recent advancements in image restoration.

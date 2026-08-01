@@ -26,11 +26,30 @@ from torch.nn import LayerNorm
 # ---------------------------------------------------------
 # 1. HAFT WRAPPER MODEL
 # ---------------------------------------------------------
+import sys
+
+# Parse ablation flags from command line if provided
+ablation_refinement = '--no_refinement' not in sys.argv
+ablation_coc = '--no_coc' not in sys.argv
+ablation_pos = '--no_pos' not in sys.argv
+
 class HAFT_Bokehlicious(Bokehlicious):
-    def __init__(self, d_embed=64, use_refinement=True, **kwargs):
+    """
+    Subclasses Bokehlicious to add:
+    1. Aperture-aware FiLM conditioning.
+    2. Ray-tracing positional embeddings (if enabled).
+    3. Iterative Refinement Module (optional ablation).
+    4. CoC Map Embeddings (optional ablation).
+    """
+    def __init__(self, d_embed=64, use_refinement=ablation_refinement, use_coc_map=ablation_coc, in_stage_use_pos_map=ablation_pos, **kwargs):
+        # Pass it down to Bokehlicious so it builds the correct in_stage conv size
+        kwargs['in_stage_use_pos_map'] = in_stage_use_pos_map
+        kwargs['use_coc_map'] = use_coc_map
         super().__init__(**kwargs)
         self.d_embed = d_embed
         self.use_refinement = use_refinement
+        self.use_coc_map = use_coc_map
+        self.in_stage_use_pos_map = in_stage_use_pos_map
         
         # Phase 1: Aperture Encoder
         self.aperture_encoder = ApertureEncoder(d_embed=self.d_embed)
@@ -50,6 +69,9 @@ class HAFT_Bokehlicious(Bokehlicious):
             nn.init.zeros_(self.refinement_out.bias)
 
     def forward(self, source, bokeh_strength=None, pos_map=None, bokeh_strength_map=None, depth=None, mask=None, **kwargs):
+        if not getattr(self, 'in_stage_use_pos_map', True):
+            pos_map = None
+            
         # 1. Generate Aperture Embedding (e_f)
         f_val = bokeh_strength.view(-1, 1) if bokeh_strength is not None else torch.ones(source.shape[0], 1).to(source.device)
         e_f = self.aperture_encoder(f_val)
@@ -58,8 +80,8 @@ class HAFT_Bokehlicious(Bokehlicious):
         self.mean = self.mean.type_as(source)
         source_mean = (source - self.mean) * self.img_range
 
-        x = torch.cat((source_mean, pos_map), dim=1) if self.in_stage_use_pos_map else source
-        x = torch.cat((x, bokeh_strength_map), dim=1) if self.in_stage_use_bokeh_strength_map else x
+        x = torch.cat((source_mean, pos_map), dim=1) if self.in_stage_use_pos_map and pos_map is not None else source
+        x = torch.cat((x, bokeh_strength_map), dim=1) if self.in_stage_use_bokeh_strength_map and bokeh_strength_map is not None else x
         
         # Embed CoC map directly into the base CNN
         if getattr(self, 'use_coc_map', True) and kwargs.get('coc_map') is not None:
@@ -77,7 +99,7 @@ class HAFT_Bokehlicious(Bokehlicious):
             x = down(x)
 
         x_prep = self.conv_prep(x)
-        pos_map_t = torch.nn.functional.interpolate(pos_map, scale_factor=1 / 2 ** self.u_depth, mode='bilinear') if self.positional_dfe else None
+        pos_map_t = torch.nn.functional.interpolate(pos_map, scale_factor=1 / 2 ** self.u_depth, mode='bilinear') if (self.positional_dfe and pos_map is not None) else None
         
         # Deep Feature Extraction
         x_after_body = self.forward_features(x_prep, bokeh_strength=bokeh_strength, pos_map=pos_map_t)
@@ -119,18 +141,26 @@ class HAFT_Bokehlicious(Bokehlicious):
 # 2. CONFIGURATION (Small.pt backbone + 6GB VRAM safety)
 # ---------------------------------------------------------
 CONFIG = {
-    "img_size": 512,           # Reduced from 512 → cuts compute ~44%, epochs ~4.5h instead of 8h
-    "batch_size": 2,           # Reduced to 1 to fix OOM on 6GB GPU
+    "img_size": 256,           # Reduced to 256 for ablation studies
+    "batch_size": 1,           # Reduced to 1 to fix OOM on 6GB GPU
     "accum_steps": 8,          # Effective batch size of 8 (less noisy gradients)
     "lr_backbone": 1e-5,       # Backbone: gentle fine-tune (already pretrained)
     "lr_haft": 5e-4,           # HAFT heads: learn aggressively (50x backbone)
-    "epochs": 100,             # Total epochs
+    "epochs": 15,              # Fast ablation convergence
     "workers": 8,              # HPC system max
-    "data_root": "dataset/RealBokeh_3MP", 
+    "data_root": "dataset/MODEST_Scene1_28mm",
     
     "model_args": {
         "u_width": 32,                         
-        "u_depth": 2,
+        "u_depth": 2,                          
+        "in_stage_use_pos_map": ablation_pos,
+        "enc_blks_use_pos_map": [ablation_pos, ablation_pos],
+        "dec_blks_use_pos_map": [ablation_pos, ablation_pos],
+        "out_stage_use_pos_map": ablation_pos,
+        "in_stage_use_bokeh_strength_map": False, 
+        "use_refinement": ablation_refinement,
+        "use_coc_map": ablation_coc,
+        
         # --- Large backbone: 6 DFE blocks (not 4!) ---
         "embed_dims": [192, 192, 192, 192, 192, 192],            
         "depths": [6, 6, 6, 6, 6, 6],                   
@@ -143,8 +173,8 @@ CONFIG = {
         
         # --- Flags matching large backbone ---
         "in_stage_use_bokeh_strength_map": True,
-        "positional_dfe": True,
-        "positional_conv_last": True
+        "positional_dfe": ablation_pos,
+        "positional_conv_last": ablation_pos
     }
 }
 
@@ -219,19 +249,27 @@ class LocalBokehDataset(Dataset):
         mask_path = os.path.join(self.root, "mask", base_name + ".png")
         
         # Load Depth as 16-bit and normalize, Mask as grayscale
+        w, h = sharp.size
         depth_raw = cv2.imread(depth_path, cv2.IMREAD_UNCHANGED)
         if depth_raw is not None and depth_raw.dtype == np.uint16:
             depth_np = depth_raw.astype(np.float32) / 65535.0
-        else:
+        elif os.path.exists(depth_path):
             depth_img = Image.open(depth_path).convert('L')
             depth_np = np.array(depth_img, dtype=np.float32) / 255.0
-        mask_img = Image.open(mask_path).convert('L')
+        else:
+            # Fallback for ablation study on datasets without depth (MODEST)
+            depth_np = np.full((h, w), 0.5, dtype=np.float32)
+            
+        if os.path.exists(mask_path):
+            mask_img = Image.open(mask_path).convert('L')
+        else:
+            # Fallback for ablation study on datasets without mask
+            mask_img = Image.fromarray(np.ones((h, w), dtype=np.uint8) * 255)
 
         aperture = sample['aperture']
         ap_embedding = 2.0 / (aperture if aperture > 0 else 1.0)
 
         # 3. Use original full-resolution images for cropping (vital for correct blur scale)
-        w, h = sharp.size
         
         # Calculate CoC Map: CoC = |Depth - Focal_Depth| / Aperture
         focal_depth = np.median(depth_np)
@@ -336,7 +374,7 @@ def train():
     print(f"✅ Hardware: {torch.cuda.get_device_name(0)}" if device.type == "cuda" else "⚠️ CPU Mode")
     
     train_set = LocalBokehDataset(CONFIG['data_root'], split="train", img_size=CONFIG["img_size"])
-    val_set = LocalBokehDataset(CONFIG['data_root'], split="validation", img_size=CONFIG["img_size"])
+    val_set = LocalBokehDataset(CONFIG['data_root'], split="test", img_size=CONFIG["img_size"])
     train_loader = DataLoader(train_set, batch_size=CONFIG["batch_size"], shuffle=True, 
                               pin_memory=True, num_workers=CONFIG["workers"], persistent_workers=True)
     val_loader = DataLoader(val_set, batch_size=1, shuffle=False, 
@@ -344,7 +382,7 @@ def train():
     
     print(f"🏗️ Initializing HAFT Model (Small Backbone)...")
     print(f"📊 Train: {len(train_set)} samples | Val: {len(val_set)} samples")
-    model = HAFT_Bokehlicious(**CONFIG["model_args"], use_refinement=True).to(device)
+    model = HAFT_Bokehlicious(**CONFIG["model_args"]).to(device)
 
     # ---------------------------------------------------------
     # STATE RECOVERY (Auto-detect latest checkpoint)
@@ -387,16 +425,17 @@ def train():
             model_dict = model.state_dict()
             filtered_dict = {k: v for k, v in state_dict.items() if k in model_dict and v.shape == model_dict[k].shape}
             
-            # --- Fix in_stage weight mismatch (pretrained=6ch, new=7ch with CoC) ---
+            # --- Fix in_stage weight mismatch (pretrained=6ch, new=7ch with CoC, or 4ch ablated) ---
             for key in ['in_stage.weight', 'in_stage.bias']:
                 if key in state_dict and key in model_dict and state_dict[key].shape != model_dict[key].shape:
                     old_w = state_dict[key]
                     new_w = model_dict[key].clone()
                     if key.endswith('.weight'):
-                        n_old = old_w.shape[1]
-                        new_w[:, :n_old, :, :] = old_w
+                        n_min = min(old_w.shape[1], new_w.shape[1])
+                        new_w[:, :n_min, :, :] = old_w[:, :n_min, :, :]
                     else:
-                        new_w[:old_w.shape[0]] = old_w
+                        n_min = min(old_w.shape[0], new_w.shape[0])
+                        new_w[:n_min] = old_w[:n_min]
                     filtered_dict[key] = new_w
                     print(f"  🔧 Partial load for {key}: {old_w.shape} → {new_w.shape}")
             
@@ -532,9 +571,12 @@ def train():
                 val_psnr += calc_psnr(pred, tgt)
                 val_lpips_metric += batch_lpips
         
-        avg_val_loss = val_loss / len(val_loader)
-        avg_val_psnr = val_psnr / len(val_loader)
-        avg_val_lpips = val_lpips_metric / len(val_loader)
+        if len(val_loader) > 0:
+            avg_val_loss = val_loss / len(val_loader)
+            avg_val_psnr = val_psnr / len(val_loader)
+            avg_val_lpips = val_lpips_metric / len(val_loader)
+        else:
+            avg_val_loss, avg_val_psnr, avg_val_lpips = 0, 0, 0
 
         # ==================== SAVE ====================
         os.makedirs("checkpoints", exist_ok=True)
